@@ -1,0 +1,135 @@
+---
+title: "STAT_240_Project"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      error = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE)
+library(tidyverse)
+library(naniar)
+```
+
+### Introduction
+The relationship between SAT scores and graduation rates in high schools is an area of interest for educators and policymakers alike. Some wonder if higher SAT scores correspond to better graduation rates, but what does the data reveal? In this analysis, we will explore the linear relationship between SAT scores and graduation rates among New York City high schools. By examining data from the 2012 graduation rates alongside 2012 SAT results provided by the NYC Department of Education, we will determine whether such a correlation exists. Using a scatter plot and linear regression model, we hope to provide insights into if and how these two educational measures combine within NYC high schools.
+
+Conclude the introduction with a thesis statement. 
+The thesis statement should clearly state the main finding of the report; you'll have to actually conduct the analysis, then write the thesis, because the thesis is about what your analysis actually found. For example, "We find strong evidence that the average age of smokers is higher than the average age of non-smokers among Wisconsin adults." The rest of the report will explain exactly how you arrived at this conclusion.
+
+
+### Background
+```{r echo = FALSE}
+graduation_data <- read_csv("../data/2005-2019_Graduation_Rates_All.csv")
+sat_data <- read_csv("../data/2012_SAT_Results.csv")
+```
+
+```{r echo = FALSE}
+sat <- sat_data %>% select(- DBN) %>% rename(
+    school_name = `SCHOOL NAME`,
+    num_test_takers = `Num of SAT Test Takers`,
+    reading_score_avg =`SAT Critical Reading Avg. Score`,
+    math_score_avg = `SAT Math Avg. Score`,
+    writing_score_avg = `SAT Writing Avg. Score`
+  )
+
+graduation <- graduation_data %>% filter(`Cohort Year` == 2012, Cohort == "4 year August") %>% select(`School Name`, `% Grads`) %>% filter(`School Name` %in% sat$school_name) %>% rename(school_name = `School Name`, percent_grad = `% Grads`)
+
+sat <- sat %>% filter(school_name %in% graduation$school_name) %>% replace_with_na_all(condition = ~.x == "s")
+
+sat$math_score_avg <- as.numeric(sat$math_score_avg)
+sat$reading_score_avg <- as.numeric(sat$reading_score_avg)
+sat$writing_score_avg <- as.numeric(sat$writing_score_avg)
+graduation$percent_grad <- as.numeric(graduation$percent_grad)
+
+dataset <- inner_join(graduation, sat, by = "school_name")
+
+dataset <- dataset %>% mutate(avg_sat = math_score_avg + reading_score_avg + writing_score_avg)
+```
+To answer our research question, we need data on average SAT scores within NYC schools in 2012 as well as graduation rates from the same high schools. Therefore, our dataset consists of data from two sources.
+
+Describe any background information needed to better comprehend the question or questions you are posing and how the data relate to the question. (E.g. if your question is about curling medals at the Olympics versus GDP, it might help to give a one-sentence explanation on what curling is, which event(s) you are analyzing, and what GDP is.)
+
+If present, describe any unusual factors in the data (e.g. the Olympics did not hold curling competitions in these years) that might affect your visualization or analysis.
+
+Include AT LEAST ONE relevant graph towards answering your question of interest and explain how it supports your conclusion. You may also choose to report numerical summaries, such as sample means or proportions or correlation coefficients, if you think that it aids your central story.
+
+
+
+#### Graduation Data (2005-2019_Graduation_Rates_All.csv)
+
+Our graduation data comes from the NYC Department of Education. This dataset catalogs the school names, year, the number of students within a cohort, graduation percent / number of graduated students, number of dropouts, number of students graduated students with honors, and more all from 2005 to 2019. The raw data contains thousands of rows for these various columns (reported graduation information for a school in a given year); however, for our purposes, we only collected rows corresponding to the year 2012, and only selected two columns: "School Name" and "% Grads"
+
+The "School Name" column is simply a NYC school's name; it allows us to filter the SAT data later so only the schools contained within both datasets will be shown within them. The "% Grads" column is a percentage of students who graduated within a school in a given year. It was already given in the original dataset but to be clear is a result of taking the values from the "# Grads" column and dividing them by the values from the "# Total Cohort" column for each row.
+
+#### SAT Data (2012_SAT_Results.csv)
+
+Our SAT data comes from the NYC Department of Education.  The resulting dataset has four columns: one for the number of test takers, and then the rest for the average reading, writing, and math scores.
+
+Note that, on average, each year only has 12 full moons. Thus, we will only have about 36 full moon days to compare against non-full moon days. This relatively small sample size may impact our results.
+
+#### Combined Data
+
+With these two datasets in hand, we can join them together on their respective school_name columns, and then conduct some statistical analysis to see if the graduation rates within NYC schools change with average SAT scores.
+
+### Statistical Analysis
+This section should include all of your technical vocabulary; including a definition of your parameter(s) of interest, declaration of what type of inference you are using, checking of assumptions, stating of hypotheses, and reporting of at least one confidence interval OR p-value. Nowhere else in your report should these show up. 
+If any assumptions are not met, that is okay; you can continue to run that analysis, just make sure you explain why it is not met, and acknowledge the assumption is not met in the discussions.
+
+#### Initial Impressions
+As seen in the figure below, in our sample set, the mean number of crimes on full moon days is approximately equal to that on non-full moon days.
+
+**figure here
+
+While this plot may hint at the crime rates not being affected by the phase of the moon, we need to conduct further analysis to say anything conclusively.
+
+#### Statistical Model
+
+```{r echo = FALSE}
+cor(dataset$reading_score_avg, dataset$percent_grad)
+```
+
+```{r echo = FALSE}
+ggplot(dataset, aes(x = avg_sat, y = percent_grad)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Graduation Rates vs Average SAT Scores", x = "Average SAT Score", y = "Percent Students Graduated", color = "No of closure")
+```
+
+```{r echo = FALSE}
+model <- lm(percent_grad ~ avg_sat, dataset)
+summary(model)
+```
+
+### Discussion
+
+#### Further Interpretation
+
+#### Short-comings and Future Work
+
+#### Conclusion
+
+
+### References
+"2005-2019 Graduation Rates - All": https://data.cityofnewyork.us/Education/2005-2019-Graduation-Rates-All/3vje-du8p/about_data
+
+"2012 SAT Results": https://data.cityofnewyork.us/Education/2012-SAT-Results/f9bf-2cp4/about_data
+
+Used to find how to replace all instances of "s" within dataset to "NA":  https://cran.r-project.org/web/packages/naniar/vignettes/replace-with-na.html 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
