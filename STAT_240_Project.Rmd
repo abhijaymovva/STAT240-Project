@@ -42,9 +42,9 @@ sat$reading_score_avg <- as.numeric(sat$reading_score_avg)
 sat$writing_score_avg <- as.numeric(sat$writing_score_avg)
 graduation$percent_grad <- as.numeric(graduation$percent_grad)
 
-dataset <- inner_join(graduation, sat, by = "school_name")
+dataset <- inner_join(graduation, sat, by = "school_name") %>% filter(!is.na(reading_score_avg) & !is.na(math_score_avg) &!is.na(writing_score_avg))
 
-dataset <- dataset %>% mutate(avg_sat = math_score_avg + reading_score_avg + writing_score_avg)
+dataset <- dataset %>% mutate(avg_sat = math_score_avg + ((reading_score_avg + writing_score_avg)/2))
 ```
 To answer our research question, we need data on average SAT scores within NYC schools in 2012 as well as graduation rates from the same high schools. Therefore, our dataset consists of data from two sources.
 
@@ -92,11 +92,77 @@ cor(dataset$reading_score_avg, dataset$percent_grad)
 ```{r echo = FALSE}
 ggplot(dataset, aes(x = avg_sat, y = percent_grad)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Graduation Rates vs Average SAT Scores", x = "Average SAT Score", y = "Percent Students Graduated", color = "No of closure")
 ```
-
+$$H_0: \beta_1 = 0 \quad \text{}\quad H_A: \beta_1 > 0$$
 ```{r echo = FALSE}
 model <- lm(percent_grad ~ avg_sat, dataset)
 summary(model)
 ```
+```{r echo = FALSE}
+resid(model)
+
+```
+
+```{r echo = FALSE}
+dataset %>% 
+  mutate(residuals = resid(model)) %>% 
+  select(avg_sat, percent_grad, residuals) %>% 
+  head()
+```
+```{r echo = FALSE}
+predict(model) 
+```
+```{r echo = FALSE}
+dataset %>% 
+  mutate(
+    residuals = resid(model),
+    predictions = predict(model)) %>% 
+  select(avg_sat, percent_grad, predictions, residuals) %>% 
+  head()
+```
+```{r echo = FALSE}
+dataset %>% 
+  mutate(residuals = resid(model)) %>% 
+# Relatively straightforward scatter plot
+ggplot(aes(x = avg_sat, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0)
+```
+**Note for later, only the second assumption was met
+```{r echo = FALSE}
+point_estimate = 0.081492
+se = 0.008786
+
+test_stat = (point_estimate - 0)/se
+
+test_stat
+```
+```{r echo = FALSE}
+n = nrow(dataset)
+
+gt(df = n - 2) +
+  geom_vline(xintercept = test_stat)
+```
+```{r echo = FALSE}
+(1- pt(test_stat, df = n - 2))*2
+```
+```{r echo = FALSE}
+x = dataset$avg_sat
+y = dataset$percent_grad
+C = 0.99
+n = nrow(dataset)
+
+r = cor(x, y)
+beta_hat_1 = r * sd(y) / sd(x)
+se = 0.008786
+
+moe = qt(C + (1-C)/2, df = n - 2)*se
+
+left = beta_hat_1 - moe
+right = beta_hat_1 + moe
+
+c(left, right)
+```
+
 
 ### Discussion
 
