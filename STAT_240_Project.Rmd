@@ -54,8 +54,6 @@ If present, describe any unusual factors in the data (e.g. the Olympics did not 
 
 Include AT LEAST ONE relevant graph towards answering your question of interest and explain how it supports your conclusion. You may also choose to report numerical summaries, such as sample means or proportions or correlation coefficients, if you think that it aids your central story.
 
-
-
 #### Graduation Data (2005-2019_Graduation_Rates_All.csv)
 
 Our graduation data comes from the NYC Department of Education. This dataset catalogs the school names, year, the number of students within a cohort, graduation percent / number of graduated students, number of dropouts, number of students graduated students with honors, and more all from 2005 to 2019. The raw data contains thousands of rows for these various columns (reported graduation information for a school in a given year); however, for our purposes, we only collected rows corresponding to the year 2012, and only selected two columns: "School Name" and "% Grads"
@@ -92,76 +90,18 @@ cor(dataset$reading_score_avg, dataset$percent_grad)
 ```{r echo = FALSE}
 ggplot(dataset, aes(x = avg_sat, y = percent_grad)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Graduation Rates vs Average SAT Scores", x = "Average SAT Score", y = "Percent Students Graduated", color = "No of closure")
 ```
-$$H_0: \beta_1 = 0 \quad \text{}\quad H_A: \beta_1 > 0$$
 ```{r echo = FALSE}
 model <- lm(percent_grad ~ avg_sat, dataset)
-summary(model)
-```
-```{r echo = FALSE}
-resid(model)
-
 ```
 
 ```{r echo = FALSE}
 dataset %>% 
   mutate(residuals = resid(model)) %>% 
-  select(avg_sat, percent_grad, residuals) %>% 
-  head()
-```
-```{r echo = FALSE}
-predict(model) 
-```
-```{r echo = FALSE}
-dataset %>% 
-  mutate(
-    residuals = resid(model),
-    predictions = predict(model)) %>% 
-  select(avg_sat, percent_grad, predictions, residuals) %>% 
-  head()
-```
-```{r echo = FALSE}
-dataset %>% 
-  mutate(residuals = resid(model)) %>% 
-# Relatively straightforward scatter plot
 ggplot(aes(x = avg_sat, y = residuals)) +
   geom_point() +
   geom_hline(yintercept = 0)
 ```
 **Note for later, only the second assumption was met
-```{r echo = FALSE}
-point_estimate = 0.081492
-se = 0.008786
-
-test_stat = (point_estimate - 0)/se
-
-test_stat
-```
-```{r echo = FALSE}
-n = nrow(dataset)
-
-gt(df = n - 2) +
-  geom_vline(xintercept = test_stat)
-```
-```{r echo = FALSE}
-(1- pt(test_stat, df = n - 2))*2
-```
-```{r echo = FALSE}
-x = dataset$avg_sat
-y = dataset$percent_grad
-C = 0.99
-n = nrow(dataset)
-
-r = cor(x, y)
-beta_hat_1 = r * sd(y) / sd(x)
-se = 0.008786
-
-moe = qt(C + (1-C)/2, df = n - 2)*se
-
-left = beta_hat_1 - moe
-right = beta_hat_1 + moe
-
-c(left, right)
-```
 
 
 ### Discussion
