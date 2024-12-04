@@ -1,7 +1,10 @@
 ---
-title: "STAT_240_Project"
+title: "STAT 240 Final Project"
 output: html_document
 ---
+Salome Javakhishvili, Ryan Logan, Abhijay Movva, Faraz Behlum
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       error = TRUE, 
@@ -12,19 +15,20 @@ library(naniar)
 ```
 
 ### Introduction
-The relationship between SAT scores and graduation rates in high schools is an area of interest for educators and policymakers alike. Some wonder if higher SAT scores correspond to better graduation rates, but what does the data reveal? In this analysis, we will explore the linear relationship between SAT scores and graduation rates among New York City high schools. By examining data from the 2012 graduation rates alongside 2012 SAT results provided by the NYC Department of Education, we will determine whether such a correlation exists. Using a scatter plot and linear regression model, we hope to provide insights into if and how these two educational measures combine within NYC high schools.
+The relationship between SAT scores and graduation rates in high schools is an area of interest for educators and policymakers alike. Some wonder if higher SAT scores correspond to better graduation rates, but what does the data reveal? In this analysis, we explored whether there is a linear relationship between SAT scores and graduation rates among New York City high schools. 
 
-Conclude the introduction with a thesis statement. 
-The thesis statement should clearly state the main finding of the report; you'll have to actually conduct the analysis, then write the thesis, because the thesis is about what your analysis actually found. For example, "We find strong evidence that the average age of smokers is higher than the average age of non-smokers among Wisconsin adults." The rest of the report will explain exactly how you arrived at this conclusion.
+By examining data from the 2012 graduation rates alongside 2012 SAT results provided by the NYC Department of Education, we found although there is a moderate positive correlation between the two, the average SAT scores and graduation rates do not have a linear relationship. Using a scatter plot, linear regression model, and residual plot, we hope to provide insights into how we came about our findings.
 
 
 ### Background
 ```{r echo = FALSE}
+# loading in data
 graduation_data <- read_csv("../data/2005-2019_Graduation_Rates_All.csv")
 sat_data <- read_csv("../data/2012_SAT_Results.csv")
 ```
 
 ```{r echo = FALSE}
+# cleaning data
 sat <- sat_data %>% select(- DBN) %>% rename(
     school_name = `SCHOOL NAME`,
     num_test_takers = `Num of SAT Test Takers`,
@@ -43,16 +47,11 @@ sat$writing_score_avg <- as.numeric(sat$writing_score_avg)
 graduation$percent_grad <- as.numeric(graduation$percent_grad)
 
 dataset <- inner_join(graduation, sat, by = "school_name") %>% filter(!is.na(reading_score_avg) & !is.na(math_score_avg) &!is.na(writing_score_avg))
-
+#making avg sat score column for use in models/graphs
 dataset <- dataset %>% mutate(avg_sat = math_score_avg + ((reading_score_avg + writing_score_avg)/2))
 ```
+
 To answer our research question, we need data on average SAT scores within NYC schools in 2012 as well as graduation rates from the same high schools. Therefore, our dataset consists of data from two sources.
-
-Describe any background information needed to better comprehend the question or questions you are posing and how the data relate to the question. (E.g. if your question is about curling medals at the Olympics versus GDP, it might help to give a one-sentence explanation on what curling is, which event(s) you are analyzing, and what GDP is.)
-
-If present, describe any unusual factors in the data (e.g. the Olympics did not hold curling competitions in these years) that might affect your visualization or analysis.
-
-Include AT LEAST ONE relevant graph towards answering your question of interest and explain how it supports your conclusion. You may also choose to report numerical summaries, such as sample means or proportions or correlation coefficients, if you think that it aids your central story.
 
 #### Graduation Data (2005-2019_Graduation_Rates_All.csv)
 
@@ -62,58 +61,108 @@ The "School Name" column is simply a NYC school's name; it allows us to filter t
 
 #### SAT Data (2012_SAT_Results.csv)
 
-Our SAT data comes from the NYC Department of Education.  The resulting dataset has four columns: one for the number of test takers, and then the rest for the average reading, writing, and math scores.
+The SAT is simply a multiple-choice, computer-based test. The purpose of the SAT is to measure a high school student's readiness for college, and is scored on a scale of 400 - 1600.
 
-Note that, on average, each year only has 12 full moons. Thus, we will only have about 36 full moon days to compare against non-full moon days. This relatively small sample size may impact our results.
+Our SAT data comes from the NYC Department of Education.  The resulting dataset has four columns: one for the number of test takers, and then the rest for the average reading, writing, and math scores.
 
 #### Combined Data
 
-With these two datasets in hand, we can join them together on their respective school_name columns, and then conduct some statistical analysis to see if the graduation rates within NYC schools change with average SAT scores.
+With these two datasets in hand, we can join them together on their respective school_name columns into one dataset, and then conduct some statistical analysis to see if the graduation rates within NYC schools change with average SAT scores.
 
 ### Statistical Analysis
-This section should include all of your technical vocabulary; including a definition of your parameter(s) of interest, declaration of what type of inference you are using, checking of assumptions, stating of hypotheses, and reporting of at least one confidence interval OR p-value. Nowhere else in your report should these show up. 
-If any assumptions are not met, that is okay; you can continue to run that analysis, just make sure you explain why it is not met, and acknowledge the assumption is not met in the discussions.
 
-#### Initial Impressions
-As seen in the figure below, in our sample set, the mean number of crimes on full moon days is approximately equal to that on non-full moon days.
-
-**figure here
-
-While this plot may hint at the crime rates not being affected by the phase of the moon, we need to conduct further analysis to say anything conclusively.
-
-#### Statistical Model
-
-```{r echo = FALSE}
-cor(dataset$reading_score_avg, dataset$percent_grad)
-```
+#### Linear Regression Model
 
 ```{r echo = FALSE}
 ggplot(dataset, aes(x = avg_sat, y = percent_grad)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Graduation Rates vs Average SAT Scores", x = "Average SAT Score", y = "Percent Students Graduated", color = "No of closure")
 ```
+
+While this plot shows at the graduation rates having no linear relationship with average SAT scores, we need to conduct further analysis to say anything conclusively. We will do this with a residual model.
+
+#### The Linear Model
+
+A linear model allows us to examine the relationship between two variables, like average SAT and graduation rates, and determine if that relationship is statistically significant
+
 ```{r echo = FALSE}
 model <- lm(percent_grad ~ avg_sat, dataset)
+summary(model)
+```
+Using our model, we can generate a residual model and plot. This helps us visualize the differences between the observed data points and the values predicted by the linear model, allowing assessment of the model's assumptions.
+
+#### The Residual Model and Residual Plot
+```{r echo = FALSE}
+summary(resid(model))
+```
+
+
+```{r echo = FALSE}
+dataset %>% mutate(residuals = resid(model)) %>% ggplot(aes(x = avg_sat, y = residuals)) + geom_point() +  geom_hline(yintercept = 0) + labs(title = "Residual Plot", x = "Average SAT Score", y = "Residuals", color = "No of closure")
+```
+
+#### Checking Assumptions of our Linear Regression Model with our Residual Plot
+
+(1) Linearity: The residuals show an obvious non-linear pattern. Therefore, this assumption is violated.
+
+(2) Normal Errors Around 0 : The points don’t tend to be near the line on average, and the points aren’t evenly spread in both directions around 0. Therefore, this assumption is violated.
+
+(3) Constant Variance/SD: The spread of the residuals around the center line decreases or "funnels in" as you move horizontally across the plot. Therefore, this assumption is violated.
+
+Although one violation is enough, we still checked all 3 and can see all were violated. Still, lets perform a hypothesis test
+for Beta-1, the slope of the linear relationship between the two variables in our linear regression model.
+
+$$H_0: \beta_1 = 0 \quad \text{}\quad H_A: \beta_1 > 0$$
+```{r echo = FALSE}
+point_estimate = 0.081492
+se = 0.008786
+test_stat = (point_estimate - 0)/se
+```
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+n = nrow(dataset)
+# kept saying couldn't find function gt even though the code was working fine so commented out
+#plot = gt(df = n - 2) +
+  #geom_vline(xintercept = test_stat)
 ```
 
 ```{r echo = FALSE}
-dataset %>% 
-  mutate(residuals = resid(model)) %>% 
-ggplot(aes(x = avg_sat, y = residuals)) +
-  geom_point() +
-  geom_hline(yintercept = 0)
+p_val = (1- pt(test_stat, df = n - 2))*2
 ```
-**Note for later, only the second assumption was met
+Our p-value being extremely close to 0, suggests very strong evidence against our null hypothesis ($H_0: \beta_1 = 0$), therefore we must reject the null hypothesis. The slope is significantly different from zero.
 
+```{r echo = FALSE}
+x = dataset$avg_sat
+y = dataset$percent_grad
+C = 0.99
+n = nrow(dataset)
+r = cor(x, y)
+beta_hat_1 = r * sd(y) / sd(x)
+se = 0.008786
+moe = qt(C + (1-C)/2, df = n - 2)*se
+left = beta_hat_1 - moe
+right = beta_hat_1 + moe
+#c(left, right)
+```
+
+The confidence interval (0.0587, 0.1043) indicates a statistically significant positive relationship between the variables at the 99% confidence level. The slope is unlikely to be zero, reinforcing the finding that the independent variable has a positive effect on the dependent variable.
 
 ### Discussion
 
+The correlation coefficient between the average SAT scores and the graduation rates of the schools in NY is 0.453095 which implies that there is a moderate positive correlation but using our statistical models above we can see it is not linear. The strength of the correlation moderately strong, but not strong enough to imply a tightly bound relationship between SAT scores and the graduation rates of NY schools.
+
 #### Further Interpretation
+
+Since the correlation is not strong enough to imply a strong correlation there are probably other existing factors that effect both variables of average SAT scores and the graduation rates of the different NY highschools. 
 
 #### Short-comings and Future Work
 
+One short-coming we had was that we assumed that the datasets we used would have a strong positive linear correlation. In reality, the data showed a moderate positive linear correlation which we weren't expecting. We also thought we would conclude the two variables had a strong linear relationship, but this clearly wasn't the case. Because of this our analysis of our question isn't as strong as it could be since there is no solid correlation or linear relationship. This leads us to wonder what other factors influence the correlation between the average SAT scores and the graduation rates of NY high schools and what other factors other than SAT scores could possibly have a linear relationship with the graduation rates.
+
 #### Conclusion
 
+In conclusion, the analysis revealed a moderate positive correlation (0.453095) between average SAT scores and graduation rates in NY high schools, but our statistical models suggest that relationship is in fact not strongly linear. The findings highlight the likelihood of other influencing factors beyond these two variables. Future studies could explore additional variables to better understand the these outcomes and refine the initial assumptions about the strength and nature of the correlation.
 
 ### References
+
 "2005-2019 Graduation Rates - All": https://data.cityofnewyork.us/Education/2005-2019-Graduation-Rates-All/3vje-du8p/about_data
 
 "2012 SAT Results": https://data.cityofnewyork.us/Education/2012-SAT-Results/f9bf-2cp4/about_data
