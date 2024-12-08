@@ -15,7 +15,7 @@ library(naniar)
 ```
 
 ### Introduction
-The relationship between SAT scores and graduation rates in high schools is an area of interest for educators and policymakers alike. Some wonder if higher SAT scores correspond to better graduation rates, but what does the data reveal? In this analysis, we explored whether there is a linear relationship between SAT scores and graduation rates among New York City high schools. 
+The SAT is a multiple-choice, computer-based test. The purpose of the SAT is to measure a high school student's capabilities in math and reading/writing, and is scored on a scale of 400 - 1600. It is usually taken a student's junior year and the score is then submitted to colleges. The relationship between SAT scores and graduation rates in high schools is an area of interest for educators and policymakers alike. Some wonder if higher SAT scores correspond to better graduation rates, but what does the data reveal? In this analysis, we explored whether there is a linear relationship between SAT scores and graduation rates among New York City high schools. 
 
 By examining data from the 2012 graduation rates alongside 2012 SAT results provided by the NYC Department of Education, we found although there is a moderate positive correlation between the two, the average SAT scores and graduation rates do not have a linear relationship. Using a scatter plot, linear regression model, and residual plot, we hope to provide insights into how we came about our findings.
 
@@ -60,8 +60,6 @@ Our graduation data comes from the NYC Department of Education. This dataset cat
 The "School Name" column is simply a NYC school's name; it allows us to filter the SAT data later so only the schools contained within both datasets will be shown within them. The "% Grads" column is a percentage of students who graduated within a school in a given year. It was already given in the original dataset but to be clear is a result of taking the values from the "# Grads" column and dividing them by the values from the "# Total Cohort" column for each row.
 
 #### SAT Data (2012_SAT_Results.csv)
-
-The SAT is simply a multiple-choice, computer-based test. The purpose of the SAT is to measure a high school student's readiness for college, and is scored on a scale of 400 - 1600.
 
 Our SAT data comes from the NYC Department of Education.  The resulting dataset has four columns: one for the number of test takers, and then the rest for the average reading, writing, and math scores.
 
